@@ -19,7 +19,7 @@
             overflow-x: hidden;
         }
 
-        /* --- KAYAN YILDIZ EFEKTİ --- */
+        /* --- ARKA PLAN EFEKTLERİ --- */
         .night {
             position: fixed;
             width: 100%;
@@ -40,33 +40,8 @@
             animation: tail 3000ms ease-in-out infinite, shooting 3000ms ease-in-out infinite;
         }
 
-        .shooting_star::before, .shooting_star::after {
-            content: '';
-            position: absolute;
-            top: calc(50% - 1px);
-            right: 0;
-            height: 2px;
-            background: linear-gradient(-45deg, rgba(0, 0, 255, 0), #5f91ff, rgba(0, 0, 255, 0));
-            border-radius: 999px;
-            animation: shining 3000ms ease-in-out infinite;
-        }
-
-        @keyframes tail {
-            0% { width: 0; }
-            30% { width: 100px; }
-            100% { width: 0; }
-        }
-
-        @keyframes shooting {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(300px); }
-        }
-
-        @keyframes shining {
-            0% { width: 0; }
-            50% { width: 30px; }
-            100% { width: 0; }
-        }
+        @keyframes tail { 0% { width: 0; } 30% { width: 100px; } 100% { width: 0; } }
+        @keyframes shooting { 0% { transform: translateX(0); } 100% { transform: translateX(300px); } }
 
         /* --- SAYFA TASARIMI --- */
         #overlay {
@@ -99,19 +74,6 @@
             color: #ff4d6d;
             z-index: 10;
             text-shadow: 0 0 20px rgba(255, 77, 109, 0.5);
-            display: flex;
-            align-items: center;
-        }
-
-        @keyframes beat {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-        }
-
-        .heart-icon {
-            animation: beat 1s infinite;
-            margin: 0 15px;
-            display: inline-block;
         }
 
         .image-gallery {
@@ -123,7 +85,7 @@
             width: 100%;
             max-width: 1200px;
             z-index: 10;
-            min-height: 500px; /* Sayfanın zıplamasını engellemek için */
+            min-height: 520px;
         }
 
         .card {
@@ -135,9 +97,9 @@
             padding: 15px;
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.8s ease-out;
             opacity: 0;
-            transform: translateY(50px);
+            transform: translateY(40px);
         }
 
         .card.show {
@@ -161,12 +123,6 @@
             align-items: center;
             justify-content: center;
         }
-
-        canvas#staticStars {
-            position: fixed;
-            top: 0; left: 0;
-            z-index: -1;
-        }
     </style>
 </head>
 <body>
@@ -176,13 +132,9 @@
     </div>
 
     <div class="night" id="shootingStarsBox"></div>
-    <canvas id="staticStars"></canvas>
+    <canvas id="staticStars" style="position:fixed; top:0; left:0; z-index:-1;"></canvas>
 
-    <div class="title">
-        <span class="heart-icon">❤️</span>
-        MEHMETİN ÜNZİLEYE AŞKI
-        <span class="heart-icon">❤️</span>
-    </div>
+    <div class="title">❤️ MEHMETİN ÜNZİLEYE AŞKI ❤️</div>
 
     <div class="image-gallery" id="gallery"></div>
 
@@ -193,35 +145,25 @@
     <script>
         const toplamFoto = 98;
         const uzanti = ".jpg";
-        
         const sozler = [
             "Seninle her şey daha güzel.", "Kalbim seninle atıyor.", "Gülüşün dünyamı aydınlatıyor.", "En güzel manzaram sensin.",
             "İyi ki varsın sevgilim.", "Sen benim huzurumsun.", "Aşk seninle anlam buluyor.", "Ömrümün en güzel baharı sensin.",
-            "Seninle yaşlanmak istiyorum.", "Gözlerinde kaybolmayı seviyorum.", "Kalbininin anahtarı bende kalsın.", "Sen benim evimsin.",
-            "Seni her gün yeniden seviyorum.", "Dünyanın en güzel sesi senin sesin.", "Ellerini hiç bırakma.", "Ruhumun eşisin.",
-            "Sana bakınca dünyayı unutuyorum.", "Sen benim en güzel duamsın.", "Gökkuşağım sensin.", "Yıldızım sensin.",
-            "Seni sevmek nefes almak gibi.", "Varlığın bana güç veriyor.", "Aşkımızın masalı bitmesin.", "Sen benim nefesimsin.",
-            "Seninle dünya duruyor.", "Ömrümün sonuna kadar seninleyim.", "Sen benim her şeyimsin.", "Seni çok seviyorum."
+            "Seninle yaşlanmak istiyorum.", "Gözlerinde kaybolmayı seviyorum.", "Sen benim evimsin.", "Seni her gün yeniden seviyorum."
         ];
 
         function baslat() {
-            document.getElementById("bgMusic").play().catch(e => console.log("Müzik hatası"));
-            const overlay = document.getElementById("overlay");
-            overlay.style.opacity = "0";
-            setTimeout(() => overlay.style.display = "none", 1000);
-            
-            // İlk galeriyi oluştur
-            setupGallery();
-
-            // Her 10 saniyede bir (10000ms) galeriyi yenile
-            setInterval(setupGallery, 10000);
+            document.getElementById("bgMusic").play().catch(e => console.log("Müzik çalınamadı."));
+            document.getElementById("overlay").style.opacity = "0";
+            setTimeout(() => {
+                document.getElementById("overlay").style.display = "none";
+                setupGallery(); // İlk yükleme
+                setInterval(setupGallery, 10000); // 10 saniyede bir yenile
+            }, 1000);
         }
 
         function setupGallery() {
             const gallery = document.getElementById("gallery");
-            
-            // Önce mevcut kartları temizle (Yenileri gelmeden önce boşalt)
-            gallery.innerHTML = "";
+            gallery.innerHTML = ""; // Mevcut görselleri temizle
 
             let nums = [];
             while(nums.length < 3) {
@@ -236,54 +178,35 @@
                 card.innerHTML = `<img src="${n}${uzanti}"><div class="card-text">${s}</div>`;
                 gallery.appendChild(card);
                 
-                // Küçük bir gecikmeyle "show" sınıfını ekle ki animasyon tetiklensin
-                setTimeout(() => card.classList.add('show'), index * 300 + 50);
+                // Animasyon için sınıf ekle
+                setTimeout(() => card.classList.add('show'), index * 200 + 50);
             });
         }
 
-        // Kayan Yıldızları Oluştur
-        const shootingBox = document.getElementById("shootingStarsBox");
-        for(let i=0; i<15; i++) {
-            const star = document.createElement("div");
-            star.className = "shooting_star";
-            star.style.top = Math.random() * 100 + "%";
-            star.style.left = Math.random() * 100 + "%";
-            star.style.animationDelay = Math.random() * 8000 + "ms";
-            shootingBox.appendChild(star);
-        }
-
-        // Arka Plan Sabit Yıldızlar (Canvas)
+        // Yıldız Efektleri (Canvas)
         const canvas = document.getElementById("staticStars");
         const ctx = canvas.getContext("2d");
-        
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resizeCanvas();
-        
-        const stars = Array(200).fill().map(() => ({
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.onresize = resize; resize();
+
+        const stars = Array(150).fill().map(() => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
             size: Math.random() * 1.5,
             opacity: Math.random()
         }));
 
-        function drawStars() {
+        function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             stars.forEach(s => {
                 ctx.fillStyle = `rgba(255, 255, 255, ${s.opacity})`;
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-                ctx.fill();
-                s.opacity += (Math.random() - 0.5) * 0.05;
-                if(s.opacity < 0) s.opacity = 0;
-                if(s.opacity > 1) s.opacity = 1;
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
+                s.opacity += (Math.random() - 0.5) * 0.03;
+                if(s.opacity < 0) s.opacity = 0; if(s.opacity > 1) s.opacity = 1;
             });
-            requestAnimationFrame(drawStars);
+            requestAnimationFrame(draw);
         }
-        drawStars();
-        window.onresize = resizeCanvas;
+        draw();
     </script>
 </body>
 </html>
