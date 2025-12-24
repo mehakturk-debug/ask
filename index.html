@@ -16,17 +16,15 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
             text-align: center;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         /* --- KAYAN YILDIZLAR --- */
         .night {
             position: fixed;
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             transform: rotateZ(45deg);
-            pointer-events: none;
-            z-index: 0;
+            pointer-events: none; z-index: 0;
         }
 
         .shooting_star {
@@ -43,7 +41,7 @@
 
         canvas#staticStars { position: fixed; top: 0; left: 0; z-index: -1; }
 
-        /* --- ARAYÜZ --- */
+        /* --- ARAYÜZ VE GRID (DÜZEN) AYARI --- */
         #overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: black; display: flex; justify-content: center;
@@ -58,39 +56,50 @@
         }
 
         .title {
-            margin: 20px 0; font-size: 2rem; font-weight: bold;
+            margin: 20px 0; font-size: 1.8rem; font-weight: bold;
             color: #ff4d6d; z-index: 10;
             text-shadow: 0 0 20px rgba(255, 77, 109, 0.5);
         }
 
+        /* RESİMLERİN DİZİLDİĞİ ANA KUTU */
         .image-gallery {
-            display: flex; gap: 15px;
-            justify-content: center; flex-wrap: wrap;
-            padding: 10px; width: 95%; max-width: 1400px;
-            z-index: 10; min-height: 480px;
+            display: grid; /* Grid sistemine geçtik */
+            gap: 15px;
+            width: 90%;
+            max-width: 1200px;
+            z-index: 10;
+            margin-bottom: 30px;
         }
 
-        /* --- SADE GEÇİŞ --- */
+        /* --- TELEFON AYARI (Varsayılan: 2 yan yana) --- */
+        @media (max-width: 768px) {
+            .image-gallery {
+                grid-template-columns: repeat(2, 1fr); /* Telefonda 2 sütun */
+            }
+            .card img { height: 250px !important; } /* Telefon için resim boyutu */
+            .title { font-size: 1.4rem; }
+        }
+
+        /* --- BİLGİSAYAR AYARI (Geniş ekran: 4 yan yana) --- */
+        @media (min-width: 769px) {
+            .image-gallery {
+                grid-template-columns: repeat(4, 1fr); /* Bilgisayarda 4 sütun */
+            }
+        }
+
+        /* --- KART TASARIMI VE ANİMASYON --- */
         @keyframes softFadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes softFadeOut {
-            from { opacity: 1; transform: scale(1); }
-            to { opacity: 0; transform: scale(0.95); }
-        }
-
         .card {
-            flex: 1; min-width: 220px; max-width: 280px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 15px; padding: 10px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: softFadeIn 0.8s ease-out forwards;
         }
-
-        .entering { animation: softFadeIn 0.8s ease-out forwards; }
-        .leaving { animation: softFadeOut 0.6s ease-in forwards; }
 
         .card img { 
             width: 100%; height: 320px;
@@ -99,10 +108,9 @@
         }
 
         .card-text {
-            font-size: 0.95rem; font-style: italic;
-            min-height: 50px; display: flex;
+            font-size: 0.9rem; font-style: italic;
+            min-height: 40px; display: flex;
             align-items: center; justify-content: center;
-            line-height: 1.3;
         }
     </style>
 </head>
@@ -145,28 +153,21 @@
 
         function setupGallery() {
             const gallery = document.getElementById("gallery");
-            const oldCards = gallery.querySelectorAll('.card');
+            gallery.innerHTML = ""; 
 
-            oldCards.forEach(card => card.classList.add('leaving'));
+            let nums = [];
+            while(nums.length < 4) {
+                let r = Math.floor(Math.random() * toplamFoto) + 1;
+                if(!nums.includes(r)) nums.push(r);
+            }
 
-            setTimeout(() => {
-                gallery.innerHTML = ""; 
-                let nums = [];
-                // Her defasında 4 resim seç
-                while(nums.length < 4) {
-                    let r = Math.floor(Math.random() * toplamFoto) + 1;
-                    if(!nums.includes(r)) nums.push(r);
-                }
-
-                nums.forEach((n, index) => {
-                    const s = sozler[Math.floor(Math.random() * sozler.length)];
-                    const card = document.createElement("div");
-                    card.className = "card entering"; 
-                    card.innerHTML = `<img src="${n}${uzanti}"><div class="card-text">${s}</div>`;
-                    card.style.animationDelay = (index * 0.1) + "s";
-                    gallery.appendChild(card);
-                });
-            }, 600); 
+            nums.forEach((n, index) => {
+                const s = sozler[Math.floor(Math.random() * sozler.length)];
+                const card = document.createElement("div");
+                card.className = "card"; 
+                card.innerHTML = `<img src="${n}${uzanti}"><div class="card-text">${s}</div>`;
+                gallery.appendChild(card);
+            });
         }
 
         // Kayan Yıldızlar
