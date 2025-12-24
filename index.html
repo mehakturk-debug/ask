@@ -16,30 +16,21 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
             text-align: center;
-            overflow: hidden; /* Kayma sırasında scroll çıkmaması için */
+            overflow: hidden;
         }
 
-        /* --- ARKA PLAN YILDIZLARI --- */
         canvas#staticStars { position: fixed; top: 0; left: 0; z-index: -1; }
 
-        /* --- SAYFA TASARIMI --- */
         #overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: black;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 1s ease;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; display: flex; justify-content: center;
+            align-items: center; z-index: 1000; transition: opacity 1s ease;
         }
 
         #start-btn {
-            background: #ff4d6d;
-            border: none; color: white;
-            padding: 20px 40px; font-size: 1.5rem;
-            border-radius: 50px; cursor: pointer;
-            box-shadow: 0 0 30px rgba(255, 77, 109, 0.8);
+            background: #ff4d6d; border: none; color: white;
+            padding: 20px 40px; font-size: 1.5rem; border-radius: 50px;
+            cursor: pointer; box-shadow: 0 0 30px rgba(255, 77, 109, 0.8);
             font-weight: bold;
         }
 
@@ -57,18 +48,18 @@
             position: relative;
         }
 
-        /* --- YENİ KAYMA ANİMASYONLARI --- */
-        
-        /* 1. Soldan Gelen (Yeni Resimler) */
-        @keyframes fadeInLeft {
-            from { opacity: 0; transform: translateX(-100px); }
-            to { opacity: 1; transform: translateX(0); }
+        /* --- YUKARIDAN VURARAK AŞAĞI İTME ANİMASYONLARI --- */
+
+        /* 1. Yeni Gelen: Yukarıdan aşağı iner */
+        @keyframes slideInDown {
+            0% { opacity: 0; transform: translateY(-100%); }
+            100% { opacity: 1; transform: translateY(0); }
         }
 
-        /* 2. Sağa Giden (Eski Resimler) */
-        @keyframes fadeOutRight {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(100px); }
+        /* 2. Eski Giden: Aşağı doğru düşer */
+        @keyframes slideOutBottom {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(100%); }
         }
 
         .card {
@@ -77,16 +68,17 @@
             border-radius: 20px; padding: 15px;
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
         }
 
-        /* Yeni gelen karta eklenecek sınıf */
+        /* Yeni gelen kart */
         .entering {
-            animation: fadeInLeft 0.8s forwards;
+            animation: slideInDown 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        /* Giden karta eklenecek sınıf */
+        /* Eskiyip aşağı düşen kart */
         .leaving {
-            animation: fadeOutRight 0.8s forwards;
+            animation: slideOutBottom 0.6s ease-in forwards;
         }
 
         .card img { 
@@ -141,15 +133,15 @@
             const gallery = document.getElementById("gallery");
             const oldCards = gallery.querySelectorAll('.card');
 
-            // 1. ADIM: Mevcut kartları sağa kaydırarak çıkar
+            // 1. Eskileri aşağı doğru düşür
             oldCards.forEach(card => {
                 card.classList.remove('entering');
                 card.classList.add('leaving');
             });
 
-            // 2. ADIM: Kısa bir süre sonra (animasyon sürerken) yeni kartları getir
+            // 2. Eskiler düşerken yenileri yukarıdan getir
             setTimeout(() => {
-                gallery.innerHTML = ""; // Eskileri temizle
+                gallery.innerHTML = ""; 
 
                 let nums = [];
                 while(nums.length < 3) {
@@ -160,28 +152,26 @@
                 nums.forEach((n, index) => {
                     const s = sozler[Math.floor(Math.random() * sozler.length)];
                     const card = document.createElement("div");
-                    card.className = "card entering"; // Yeni kartlara giriş animasyonu ver
+                    card.className = "card entering"; 
                     card.innerHTML = `<img src="${n}${uzanti}"><div class="card-text">${s}</div>`;
                     
-                    // Gecikmeli giriş efekti
-                    card.style.animationDelay = (index * 0.2) + "s";
+                    // Yukarıdan düşüşe hafif bir sekme efekti eklemek için gecikme
+                    card.style.animationDelay = (index * 0.15) + "s";
                     
                     gallery.appendChild(card);
                 });
-            }, 800); // Eski kartların çıkış süresiyle uyumlu
+            }, 500); // 500ms sonra yenileri girmeye başlar (vuruş etkisi için)
         }
 
-        // --- YILDIZLAR ---
+        // Yıldızlar
         const canvas = document.getElementById("staticStars");
         const ctx = canvas.getContext("2d");
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.onresize = resize; resize();
-
         const stars = Array(150).fill().map(() => ({
             x: Math.random() * canvas.width, y: Math.random() * canvas.height,
             size: Math.random() * 1.5, opacity: Math.random()
         }));
-
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             stars.forEach(s => {
