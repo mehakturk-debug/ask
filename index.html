@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <title>Mehmet & Ünzile</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            background: radial-gradient(circle, #1a0505 0%, #000000 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            text-align: center;
+            overflow-x: hidden;
+        }
+
+        /* Giriş Ekranı */
+        #overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1s ease;
+        }
+
+        #start-btn {
+            background: #ff4d6d;
+            border: none;
+            color: white;
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 77, 109, 0.6);
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        
+        #start-btn:active { transform: scale(0.95); }
+
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes beat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .heart-icon {
+            display: inline-block;
+            color: #ff4d6d;
+            animation: beat 1s infinite;
+            margin: 0 15px;
+            filter: drop-shadow(0 0 10px #ff4d6d);
+        }
+
+        .title {
+            margin: 30px 0;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ff4d6d;
+            z-index: 10;
+            text-shadow: 0 0 15px rgba(255, 77, 109, 0.3);
+        }
+
+        .image-gallery {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 20px;
+            width: 100%;
+            max-width: 1200px;
+            z-index: 10;
+        }
+
+        .card {
+            flex: 1;
+            min-width: 280px;
+            max-width: 320px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 25px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.8s ease;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .card.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card img { 
+            width: 100%;
+            height: 380px;
+            object-fit: cover;
+            border-radius: 18px;
+            margin-bottom: 15px;
+        }
+
+        .card-text {
+            font-size: 1rem;
+            font-style: italic;
+            color: #f1f1f1;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <button id="start-btn" onclick="baslat()">❤️ AŞKIMIZI BAŞLAT ❤️</button>
+    </div>
+
+    <canvas class="stars" id="starCanvas"></canvas>
+
+    <div class="title">
+        <span class="heart-icon">❤️</span>
+        MEHMETİN ÜNZİLEYE AŞKI
+        <span class="heart-icon">❤️</span>
+    </div>
+
+    <div class="image-gallery" id="gallery"></div>
+
+    <audio id="bgMusic" loop>
+        <source src="1.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const toplamFoto = 98; // 98 fotoğraf olarak güncellendi
+        const uzanti = ".jpg";
+
+        const sozler = [
+            "Seninle her şey daha güzel.", "Kalbim seninle atıyor.", "Gülüşün dünyamı aydınlatıyor.", "En güzel manzaram sensin.",
+            "İyi ki varsın sevgilim.", "Sen benim huzurumsun.", "Aşk seninle anlam buluyor.", "Ömrümün en güzel baharı sensin.",
+            "Seninle yaşlanmak istiyorum.", "Gözlerinde kaybolmayı seviyorum.", "Kalbinin anahtarı bende kalsın.", "Sen benim evimsin.",
+            "Seni her gün yeniden seviyorum.", "Dünyanın en güzel sesi senin sesin.", "Ellerini hiç bırakma.", "Ruhumun eşisin.",
+            "Seninle her an bir hediye.", "Hayatımın anlamı sensin.", "Geleceğim seninle parlıyor.", "Kalbimin tek sahibi.",
+            "Sana bakınca dünyayı unutuyorum.", "Sen benim en güzel duamsın.", "Gökkuşağım sensin.", "Yıldızım sensin.",
+            "Seninle imkansız diye bir şey yok.", "Aşkın en güzel hali sensin.", "Gönlümün efendisi.", "Gülüşüne ömrümü veririm.",
+            "Sen benim mucizemsin.", "Kalbimde sana ait bir dünya var.", "Seninle her yer cennet.", "Gözlerin en sevdiğim kitap.",
+            "Seni sevmek nefes almak gibi.", "Hayallerimin ötesindesin.", "Seninle gurur duyuyorum.", "Varlığın bana güç veriyor.",
+            "Sen benim en tatlı uykumsun.", "Gönlümün çiçeği.", "Seninle her zorluk kolay.", "Aşkımızın masalı bitmesin.",
+            "Seninle gülmek en büyük lüksüm.", "Kalbin kalbime değsin hep.", "Sen benim nefesimsin.", "Sol yanımın en güzel sızısı.",
+            "Seninle her gün yeni bir macera.", "Aşk bir çocuksa, biz onun oyun parkıyız.", "Ruhuma şifa veriyorsun.", "Seninle dünya duruyor.",
+            "Sen benim saklı cennetimsin.", "Ömrümün sonuna kadar seninleyim.", "Seninle her mevsim bahar.", "Kalbimde açan en güzel gül.",
+            "Gözlerindeki ışık yolumu aydınlatıyor.", "Seninle her şey tam.", "Aşkınla sarhoşum.", "Sen benim masalımın kahramanısın.",
+            "Varlığına bin şükür.", "Seninle her anı biriktirmek istiyorum.", "Kalbimin ritmini değiştiren tek kişisin.", "Sen benim her şeyimsin.",
+            "Seninle hayat bir bayram.", "Aşkın en saf halisin.", "Seninle sessizlik bile güzel.", "Gönlümün sultanı.",
+            "Seninle yeniden doğdum.", "Her bakışında eriyorum.", "Sen benim en güzel hikayemsin.", "Kalbimin kapısı sadece sana açık.",
+            "Seninle sonsuzluk çok kısa.", "Aşkınla büyüyorum.", "Sen benim kutup yıldızımsın.", "Gülüşün ruhuma ilaç.",
+            "Seninle el ele her yere...", "Hayat seninle bir şarkı.", "Sen benim canımsın.", "Kalbimin en derinindeki sırlar sensin.",
+            "Seninle her gün sevgililer günü.", "Aşkınla kanatlandım.", "Sen benim huzur limanımsın.", "Gözlerine bakınca huzur buluyorum.",
+            "Seninle her şey daha anlamlı.", "Gönlümün tek aşkı.", "Sen benim gün ışığımsın.", "Kalbim seninle güvende.",
+            "Seninle her dakika özel.", "Aşkın kalbime kazınmış.", "Sen benim en güzel rüyamısın.", "Varlığın hayatıma renk katıyor.",
+            "Seninle her yol sana çıkıyor.", "Gülüşünle dünyayı değiştirebilirsin.", "Sen benim tek gerçeğimsin.", "Kalbimin ritmi senin elinde.",
+            "Seninle her acı diner.", "Aşkınla her şey mümkün.", "Sen benim can yoldaşımsın.", "Ömrüm sana feda.",
+            "Seninle her saniye çok kıymetli.", "Gönlümün baharı hiç solmasın.", "Sen benim sonsuz sevdam.", "Seni çok seviyorum."
+        ];
+
+        function baslat() {
+            const music = document.getElementById("bgMusic");
+            music.play().catch(e => console.log("Müzik başlatılamadı"));
+
+            const overlay = document.getElementById("overlay");
+            overlay.style.opacity = "0";
+            setTimeout(() => overlay.style.display = "none", 1000);
+
+            setupGallery();
+        }
+
+        function setupGallery() {
+            const gallery = document.getElementById("gallery");
+            let nums = [];
+            while(nums.length < 3) {
+                let r = Math.floor(Math.random() * toplamFoto) + 1;
+                if(!nums.includes(r)) nums.push(r);
+            }
+
+            // Sözlerden de 3 farklı tane seçelim
+            let secilenSozler = [];
+            let sozKopya = [...sozler];
+            for(let i=0; i<3; i++) {
+                let idx = Math.floor(Math.random() * sozKopya.length);
+                secilenSozler.push(sozKopya.splice(idx, 1)[0]);
+            }
+
+            nums.forEach((n, index) => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `
+                    <img src="${n}${uzanti}" onerror="this.src='https://via.placeholder.com/300x400?text=Resim+Bulunamadi'">
+                    <div class="card-text">${secilenSozler[index]}</div>
+                `;
+                gallery.appendChild(card);
+                setTimeout(() => card.classList.add('show'), index * 400 + 500);
+            });
+        }
+
+        // Parıltı Efekti (Canvas)
+        const canvas = document.getElementById("starCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const stars = Array(100).fill().map(() => ({
+            x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+            size: Math.random() * 2, speed: Math.random() * 0.5 + 0.2
+        }));
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "white";
+            stars.forEach(s => {
+                s.y += s.speed;
+                if(s.y > canvas.height) s.y = 0;
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        }
+        window.onresize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+        animate();
+    </script>
+</body>
+</html>
