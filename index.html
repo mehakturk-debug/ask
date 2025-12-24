@@ -16,32 +16,11 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
             text-align: center;
-            overflow-x: hidden;
+            overflow: hidden; /* Kayma sırasında scroll çıkmaması için */
         }
 
-        /* --- ARKA PLAN EFEKTLERİ --- */
-        .night {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            transform: rotateZ(45deg);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .shooting_star {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            height: 2px;
-            background: linear-gradient(-45deg, #5f91ff, rgba(0, 0, 255, 0));
-            border-radius: 999px;
-            filter: drop-shadow(0 0 6px #699bff);
-            animation: tail 3000ms ease-in-out infinite, shooting 3000ms ease-in-out infinite;
-        }
-
-        @keyframes tail { 0% { width: 0; } 30% { width: 100px; } 100% { width: 0; } }
-        @keyframes shooting { 0% { transform: translateX(0); } 100% { transform: translateX(300px); } }
+        /* --- ARKA PLAN YILDIZLARI --- */
+        canvas#staticStars { position: fixed; top: 0; left: 0; z-index: -1; }
 
         /* --- SAYFA TASARIMI --- */
         #overlay {
@@ -57,71 +36,69 @@
 
         #start-btn {
             background: #ff4d6d;
-            border: none;
-            color: white;
-            padding: 20px 40px;
-            font-size: 1.5rem;
-            border-radius: 50px;
-            cursor: pointer;
+            border: none; color: white;
+            padding: 20px 40px; font-size: 1.5rem;
+            border-radius: 50px; cursor: pointer;
             box-shadow: 0 0 30px rgba(255, 77, 109, 0.8);
             font-weight: bold;
         }
 
         .title {
-            margin: 40px 0;
-            font-size: 2rem;
-            font-weight: bold;
-            color: #ff4d6d;
-            z-index: 10;
+            margin: 40px 0; font-size: 2rem; font-weight: bold;
+            color: #ff4d6d; z-index: 10;
             text-shadow: 0 0 20px rgba(255, 77, 109, 0.5);
         }
 
         .image-gallery {
-            display: flex;
-            gap: 25px;
-            justify-content: center;
-            flex-wrap: wrap;
-            padding: 20px;
-            width: 100%;
-            max-width: 1200px;
-            z-index: 10;
-            min-height: 520px;
+            display: flex; gap: 25px;
+            justify-content: center; flex-wrap: wrap;
+            padding: 20px; width: 100%; max-width: 1200px;
+            z-index: 10; min-height: 520px;
+            position: relative;
+        }
+
+        /* --- YENİ KAYMA ANİMASYONLARI --- */
+        
+        /* 1. Soldan Gelen (Yeni Resimler) */
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* 2. Sağa Giden (Eski Resimler) */
+        @keyframes fadeOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100px); }
         }
 
         .card {
-            flex: 1;
-            min-width: 280px;
-            max-width: 310px;
+            flex: 1; min-width: 280px; max-width: 310px;
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 15px;
+            border-radius: 20px; padding: 15px;
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.8s ease-out;
-            opacity: 0;
-            transform: translateY(40px);
         }
 
-        .card.show {
-            opacity: 1;
-            transform: translateY(0);
+        /* Yeni gelen karta eklenecek sınıf */
+        .entering {
+            animation: fadeInLeft 0.8s forwards;
+        }
+
+        /* Giden karta eklenecek sınıf */
+        .leaving {
+            animation: fadeOutRight 0.8s forwards;
         }
 
         .card img { 
-            width: 100%;
-            height: 380px;
-            object-fit: cover;
-            border-radius: 15px;
+            width: 100%; height: 380px;
+            object-fit: cover; border-radius: 15px;
             margin-bottom: 15px;
         }
 
         .card-text {
-            font-size: 1.05rem;
-            font-style: italic;
-            min-height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-size: 1.05rem; font-style: italic;
+            min-height: 70px; display: flex;
+            align-items: center; justify-content: center;
         }
     </style>
 </head>
@@ -131,8 +108,7 @@
         <button id="start-btn" onclick="baslat()">❤️ AŞKIMIZI BAŞLAT ❤️</button>
     </div>
 
-    <div class="night" id="shootingStarsBox"></div>
-    <canvas id="staticStars" style="position:fixed; top:0; left:0; z-index:-1;"></canvas>
+    <canvas id="staticStars"></canvas>
 
     <div class="title">❤️ MEHMETİN ÜNZİLEYE AŞKI ❤️</div>
 
@@ -156,44 +132,54 @@
             document.getElementById("overlay").style.opacity = "0";
             setTimeout(() => {
                 document.getElementById("overlay").style.display = "none";
-                setupGallery(); // İlk yükleme
-                setInterval(setupGallery, 10000); // 10 saniyede bir yenile
+                setupGallery(); 
+                setInterval(setupGallery, 10000); 
             }, 1000);
         }
 
         function setupGallery() {
             const gallery = document.getElementById("gallery");
-            gallery.innerHTML = ""; // Mevcut görselleri temizle
+            const oldCards = gallery.querySelectorAll('.card');
 
-            let nums = [];
-            while(nums.length < 3) {
-                let r = Math.floor(Math.random() * toplamFoto) + 1;
-                if(!nums.includes(r)) nums.push(r);
-            }
-
-            nums.forEach((n, index) => {
-                const s = sozler[Math.floor(Math.random() * sozler.length)];
-                const card = document.createElement("div");
-                card.className = "card";
-                card.innerHTML = `<img src="${n}${uzanti}"><div class="card-text">${s}</div>`;
-                gallery.appendChild(card);
-                
-                // Animasyon için sınıf ekle
-                setTimeout(() => card.classList.add('show'), index * 200 + 50);
+            // 1. ADIM: Mevcut kartları sağa kaydırarak çıkar
+            oldCards.forEach(card => {
+                card.classList.remove('entering');
+                card.classList.add('leaving');
             });
+
+            // 2. ADIM: Kısa bir süre sonra (animasyon sürerken) yeni kartları getir
+            setTimeout(() => {
+                gallery.innerHTML = ""; // Eskileri temizle
+
+                let nums = [];
+                while(nums.length < 3) {
+                    let r = Math.floor(Math.random() * toplamFoto) + 1;
+                    if(!nums.includes(r)) nums.push(r);
+                }
+
+                nums.forEach((n, index) => {
+                    const s = sozler[Math.floor(Math.random() * sozler.length)];
+                    const card = document.createElement("div");
+                    card.className = "card entering"; // Yeni kartlara giriş animasyonu ver
+                    card.innerHTML = `<img src="${n}${uzanti}"><div class="card-text">${s}</div>`;
+                    
+                    // Gecikmeli giriş efekti
+                    card.style.animationDelay = (index * 0.2) + "s";
+                    
+                    gallery.appendChild(card);
+                });
+            }, 800); // Eski kartların çıkış süresiyle uyumlu
         }
 
-        // Yıldız Efektleri (Canvas)
+        // --- YILDIZLAR ---
         const canvas = document.getElementById("staticStars");
         const ctx = canvas.getContext("2d");
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.onresize = resize; resize();
 
         const stars = Array(150).fill().map(() => ({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            size: Math.random() * 1.5,
-            opacity: Math.random()
+            x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+            size: Math.random() * 1.5, opacity: Math.random()
         }));
 
         function draw() {
