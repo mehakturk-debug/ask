@@ -16,7 +16,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
             text-align: center;
-            overflow: hidden;
+            overflow: hidden; /* Resimler dışarı kayarken scroll çıkmasın */
         }
 
         canvas#staticStars { position: fixed; top: 0; left: 0; z-index: -1; }
@@ -48,18 +48,30 @@
             position: relative;
         }
 
-        /* --- YUKARIDAN VURARAK AŞAĞI İTME ANİMASYONLARI --- */
+        /* --- YENİ YATAY AKIŞ ANİMASYONLARI --- */
 
-        /* 1. Yeni Gelen: Yukarıdan aşağı iner */
-        @keyframes slideInDown {
-            0% { opacity: 0; transform: translateY(-100%); }
-            100% { opacity: 1; transform: translateY(0); }
+        /* 1. Yeni Gelen: Ekranın tam solundan ortaya gelir */
+        @keyframes flowFromLeft {
+            0% { 
+                opacity: 0; 
+                transform: translateX(-100vw); /* Ekranın tamamen solundan başla */
+            }
+            100% { 
+                opacity: 1; 
+                transform: translateX(0); 
+            }
         }
 
-        /* 2. Eski Giden: Aşağı doğru düşer */
-        @keyframes slideOutBottom {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(100%); }
+        /* 2. Eski Giden: Ekranın tam sağına doğru gider */
+        @keyframes flowToRight {
+            0% { 
+                opacity: 1; 
+                transform: translateX(0); 
+            }
+            100% { 
+                opacity: 0; 
+                transform: translateX(100vw); /* Ekranın tamamen sağına git */
+            }
         }
 
         .card {
@@ -68,17 +80,16 @@
             border-radius: 20px; padding: 15px;
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
         }
 
-        /* Yeni gelen kart */
+        /* Yeni gelen kart sınıfı */
         .entering {
-            animation: slideInDown 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation: flowFromLeft 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
-        /* Eskiyip aşağı düşen kart */
+        /* Eskiyip sağa giden kart sınıfı */
         .leaving {
-            animation: slideOutBottom 0.6s ease-in forwards;
+            animation: flowToRight 1s ease-in forwards;
         }
 
         .card img { 
@@ -120,7 +131,7 @@
         ];
 
         function baslat() {
-            document.getElementById("bgMusic").play().catch(e => console.log("Müzik çalınamadı."));
+            document.getElementById("bgMusic").play().catch(e => console.log("Müzik hatası"));
             document.getElementById("overlay").style.opacity = "0";
             setTimeout(() => {
                 document.getElementById("overlay").style.display = "none";
@@ -133,13 +144,13 @@
             const gallery = document.getElementById("gallery");
             const oldCards = gallery.querySelectorAll('.card');
 
-            // 1. Eskileri aşağı doğru düşür
+            // 1. Eskileri ekranın sağına sürükle
             oldCards.forEach(card => {
                 card.classList.remove('entering');
                 card.classList.add('leaving');
             });
 
-            // 2. Eskiler düşerken yenileri yukarıdan getir
+            // 2. Eskiler uzaklaşırken yenileri soldan getir
             setTimeout(() => {
                 gallery.innerHTML = ""; 
 
@@ -155,12 +166,12 @@
                     card.className = "card entering"; 
                     card.innerHTML = `<img src="${n}${uzanti}"><div class="card-text">${s}</div>`;
                     
-                    // Yukarıdan düşüşe hafif bir sekme efekti eklemek için gecikme
-                    card.style.animationDelay = (index * 0.15) + "s";
+                    // Soldan gelişe hafif bir sıralama (cascade) efekti ver
+                    card.style.animationDelay = (index * 0.2) + "s";
                     
                     gallery.appendChild(card);
                 });
-            }, 500); // 500ms sonra yenileri girmeye başlar (vuruş etkisi için)
+            }, 400); // Eski resimlerin yarısı çıkmışken yenileri girmeye başlar
         }
 
         // Yıldızlar
